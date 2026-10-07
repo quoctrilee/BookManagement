@@ -5,14 +5,14 @@ process.on('unhandledRejection', (reason) => {
   console.error('❌ Unhandled Rejection:', reason?.message || reason);
 });
 
-const express  = require('express');
+const express = require('express');
 const { engine } = require('express-handlebars');
 const { BookRead, BookWrite } = require('./models/Book'); // [database]
 
-const app    = express();
-const MSSV   = process.env.MSSV   || '21110456';
+const app = express();
+const MSSV = process.env.MSSV || '21110456';
 const SUFFIX3 = MSSV.slice(-3);               // 3 số cuối MSSV → tiền tố bắt buộc
-const VAT     = Number(MSSV.slice(-1)) + 4;   // chữ số cuối + 4 → VAT %
+const VAT = Number(MSSV.slice(-1)) + 4;   // chữ số cuối + 4 → VAT %
 
 // ─── Trust proxy (cần khi deploy trên Render / Heroku) ───────────────────────
 app.set('trust proxy', 1);
@@ -40,32 +40,34 @@ app.use(express.urlencoded({ extended: true }));
 app.get('/health', (_req, res) => res.send('OK'));
 
 // >>> SESSION ─────────────────────────────────────────────────────────────────
-const session    = require('express-session');
-const { MongoStore } = require('connect-mongo');
+const session = require('express-session');
+const connectMongo = require('connect-mongo');
+// Tương thích các phiên bản connect-mongo khác nhau (v4, v5, v6)
+const MongoStore = connectMongo.default || connectMongo.MongoStore || connectMongo;
 
 app.use(session({
-  secret:            process.env.SESSION_SECRET || 'fallback_secret',
-  resave:            false,
+  secret: process.env.SESSION_SECRET || 'fallback_secret',
+  resave: false,
   saveUninitialized: false,
-  store: new MongoStore({
-    client:         require('./config/db').writeConn.getClient(),
-    dbName:         process.env.DB_NAME,
+  store: MongoStore.create({
+    client: require('./config/db').writeConn.getClient(),
+    dbName: process.env.DB_NAME,
     collectionName: 'sessions',
-    ttl:            60 * 60,          // Session hết hạn sau 1 giờ
-    autoRemove:     'disabled',       // Tắt tạo TTL index (user không có quyền createIndex)
-    touchAfter:     3600              // Không ghi lại session mỗi request (giảm writes)
+    ttl: 60 * 60,          // Session hết hạn sau 1 giờ
+    autoRemove: 'disabled',       // Tắt tạo TTL index (user không có quyền createIndex)
+    touchAfter: 3600              // Không ghi lại session mỗi request (giảm writes)
   }),
   cookie: {
-    maxAge:   3600000,
+    maxAge: 3600000,
     httpOnly: true,
-    secure:   process.env.NODE_ENV === 'production'
+    secure: process.env.NODE_ENV === 'production'
   }
 }));
 
 // Middleware tăng bộ đếm lượt truy cập (lưu xuống Atlas)
 app.use((req, res, next) => {
   req.session.views = (req.session.views || 0) + 1;
-  res.locals.views  = req.session.views;
+  res.locals.views = req.session.views;
   next();
 });
 // <<< SESSION ─────────────────────────────────────────────────────────────────
@@ -77,10 +79,10 @@ app.get('/', async (req, res) => {
     res.render('home', {
       books,
       totalBooks: books.length,
-      error:  req.query.error || null,
-      hoTen:  process.env.HO_TEN,
-      mssv:   MSSV,
-      vat:    VAT,
+      error: req.query.error || null,
+      hoTen: process.env.HO_TEN,
+      mssv: MSSV,
+      vat: VAT,
       suffix: SUFFIX3
     });
   } catch (e) {
@@ -91,9 +93,9 @@ app.get('/', async (req, res) => {
 // ─── POST /add – Thêm sách (kết nối WRITE)      [database] ──────────────────
 app.post('/add', async (req, res) => {
   try {
-    const maSP    = (req.body.maSP    || '').trim();
+    const maSP = (req.body.maSP || '').trim();
     const tenSach = (req.body.tenSach || '').trim();
-    const giaGoc  = Number(req.body.gia);
+    const giaGoc = Number(req.body.gia);
 
     // Validate tiền tố mã sản phẩm
     if (!maSP.startsWith(SUFFIX3)) {
