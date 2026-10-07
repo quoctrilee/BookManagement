@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Ứng dụng quản lý sách trên nền tảng đám mây MongoDB Atlas - Môn Điện toán đám mây">
+  <title>Quản lý Sách | DB_{{mssv}}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:           #f0f4f9;
+      --surface:      #ffffff;
+      --surface-2:    #f8fafc;
+      --border:       #e2e8f0;
+      --border-focus: #3b82f6;
+      --accent:       #2563eb;
+      --accent-light: #eff6ff;
+      --accent-2:     #7c3aed;
+      --success:      #16a34a;
+      --danger:       #dc2626;
+      --danger-bg:    #fef2f2;
+      --text-primary: #0f172a;
+      --text-secondary:#475569;
+      --text-muted:   #94a3b8;
+      --shadow-sm:    0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+      --shadow-md:    0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+      --radius:       12px;
+      --radius-sm:    8px;
+      --radius-full:  9999px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ─── HEADER ─── */
+    .site-header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+      padding: 0 2rem;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .logo-icon {
+      width: 38px; height: 38px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      border-radius: var(--radius-sm);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem; flex-shrink: 0;
+      box-shadow: 0 2px 8px rgba(37,99,235,0.25);
+    }
+    .logo-text { font-size: 1rem; font-weight: 700; color: var(--text-primary); }
+    .logo-sub  { font-size: 0.72rem; color: var(--text-muted); margin-top: 1px; }
+
+    .session-badge {
+      margin-left: auto;
+      background: var(--accent-light);
+      border: 1px solid #bfdbfe;
+      border-radius: var(--radius-full);
+      padding: 0.35rem 0.9rem;
+      font-size: 0.8rem;
+      color: var(--accent);
+      font-weight: 500;
+      display: flex; align-items: center; gap: 0.4rem;
+    }
+    .session-badge strong { font-weight: 700; }
+
+    /* ─── MAIN ─── */
+    main {
+      flex: 1;
+      max-width: 1080px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+    }
+
+    /* ─── STATS BAR ─── */
+    .stats-bar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .stat-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem 1.25rem;
+      box-shadow: var(--shadow-sm);
+      transition: box-shadow 0.2s, transform 0.2s;
+    }
+    .stat-item:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+    .stat-label { font-size: 0.7rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.4rem; }
+    .stat-value { font-size: 1.5rem; font-weight: 700; color: var(--accent); line-height: 1; }
+    .stat-unit  { font-size: 0.72rem; color: var(--text-muted); margin-top: 0.25rem; }
+
+    /* ─── CARD ─── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 1.5rem;
+      overflow: hidden;
+      transition: box-shadow 0.2s;
+    }
+    .card:hover { box-shadow: var(--shadow-md); }
+    .card-header {
+      padding: 0.85rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface-2);
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    .card-header-title { font-size: 0.875rem; font-weight: 600; color: var(--text-secondary); }
+    .card-body { padding: 1.5rem; }
+
+    /* ─── ALERT ─── */
+    .alert-error {
+      background: var(--danger-bg);
+      border: 1px solid #fecaca;
+      border-left: 4px solid var(--danger);
+      border-radius: var(--radius-sm);
+      padding: 0.85rem 1.1rem;
+      color: var(--danger);
+      font-size: 0.875rem;
+      margin-bottom: 1.25rem;
+      display: flex; align-items: center; gap: 0.5rem;
+      animation: slideDown 0.25s ease;
+    }
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-6px); }
+      to   { opacity: 1; transform: none; }
+    }
+
+    /* ─── FORM ─── */
+    .form-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 1rem;
+      align-items: end;
+    }
+    .form-group { display: flex; flex-direction: column; gap: 0.35rem; }
+    .form-label { font-size: 0.78rem; font-weight: 600; color: var(--text-secondary); }
+    .form-label em { font-style: normal; font-weight: 400; color: var(--text-muted); }
+
+    .form-input {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 0.65rem 0.9rem;
+      color: var(--text-primary);
+      font-size: 0.9rem;
+      font-family: inherit;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      outline: none;
+    }
+    .form-input:focus {
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
+    }
+    .form-input::placeholder { color: var(--text-muted); }
+
+    .btn-add {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 0.68rem 1.4rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+      white-space: nowrap;
+    }
+    .btn-add:hover { background: #1d4ed8; box-shadow: 0 4px 12px rgba(37,99,235,0.3); transform: translateY(-1px); }
+    .btn-add:active { transform: none; }
+
+    /* ─── TABLE ─── */
+    .table-wrapper { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+    thead { background: var(--surface-2); }
+    thead th {
+      padding: 0.75rem 1rem;
+      text-align: left;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--text-muted);
+      font-weight: 600;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    tbody tr { border-bottom: 1px solid var(--border); transition: background 0.15s; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: #f8faff; }
+    tbody td { padding: 0.85rem 1rem; }
+
+    .badge-id {
+      display: inline-flex;
+      background: var(--accent-light);
+      color: var(--accent);
+      border: 1px solid #bfdbfe;
+      border-radius: var(--radius-sm);
+      padding: 0.2rem 0.55rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      font-family: monospace;
+    }
+    .badge-vat {
+      display: inline-flex;
+      background: #faf5ff;
+      color: var(--accent-2);
+      border: 1px solid #e9d5ff;
+      border-radius: var(--radius-sm);
+      padding: 0.2rem 0.55rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    .price-final { font-weight: 700; color: var(--success); }
+    .text-muted-sm { color: var(--text-muted); font-size: 0.8rem; }
+
+    .empty-state { text-align: center; padding: 3rem 1rem; color: var(--text-muted); }
+    .empty-icon  { font-size: 2.5rem; margin-bottom: 0.75rem; }
+    .empty-state p { font-size: 0.9rem; }
+
+    /* ─── FOOTER ─── */
+    footer {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 1rem 2rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 0.82rem;
+    }
+    .footer-chip {
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-full);
+      padding: 0.3rem 0.8rem;
+      font-size: 0.78rem;
+      color: var(--text-secondary);
+    }
+    .footer-chip .val { font-weight: 600; color: var(--text-primary); }
+    .footer-right { margin-left: auto; color: var(--text-muted); font-size: 0.75rem; }
+
+    @media (max-width: 640px) {
+      .site-header { padding: 0 1rem; }
+      main { padding: 1.25rem 1rem; }
+      .form-row { grid-template-columns: 1fr; }
+      footer { justify-content: center; }
+      .footer-right { margin-left: 0; width: 100%; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="logo-icon">📚</div>
+    <div>
+      <div class="logo-text">Quản lý Sách</div>
+      <div class="logo-sub">MongoDB Atlas · Cloud Computing</div>
+    </div>
+    <div class="session-badge">
+      👁 Lần truy cập: <strong>{{views}}</strong>
+    </div>
+  </header>
+
+  <main>
+    {{{body}}}
+  </main>
+
+  <footer>
+    <div class="footer-chip">👤 Họ tên: <span class="val">{{hoTen}}</span></div>
+    <div class="footer-chip">🎓 MSSV: <span class="val">{{mssv}}</span></div>
+    <div class="footer-chip">💰 VAT áp dụng: <span class="val">{{vat}}%</span></div>
+    <div class="footer-right">DB_{{mssv}} · MongoDB Atlas</div>
+  </footer>
+
+</body>
+</html>

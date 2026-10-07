@@ -1,0 +1,111 @@
+<!-- ALERT ERROR -->
+{{#if error}}
+<div class="alert-error" role="alert">
+  <span>⚠️</span>
+  <span>{{error}}</span>
+</div>
+{{/if}}
+
+<!-- STATS BAR -->
+<div class="stats-bar">
+  <div class="stat-item">
+    <div class="stat-label">Tổng số sách</div>
+    <div class="stat-value">{{totalBooks}}</div>
+    <div class="stat-unit">tài liệu trong Atlas</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-label">Tiền tố mã SP</div>
+    <div class="stat-value">{{suffix}}</div>
+    <div class="stat-unit">3 số cuối MSSV</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-label">Thuế VAT</div>
+    <div class="stat-value">{{vat}}%</div>
+    <div class="stat-unit">= (chữ số cuối + 4)%</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-label">Session lưu tại</div>
+    <div class="stat-value" style="font-size:1.1rem;padding-top:0.2rem">Atlas</div>
+    <div class="stat-unit">Stateless · Scalable</div>
+  </div>
+</div>
+
+<!-- FORM THÊM SÁCH -->
+<div class="card">
+  <div class="card-header">
+    <span>➕</span>
+    <span class="card-header-title">Thêm sách mới</span>
+  </div>
+  <div class="card-body">
+    <form method="POST" action="/add" id="form-add">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="maSP">
+            Mã sản phẩm <em>(bắt đầu bằng {{suffix}})</em>
+          </label>
+          <input class="form-input" id="maSP" name="maSP" type="text"
+            placeholder="VD: {{suffix}}-001" required autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="tenSach">Tên sách</label>
+          <input class="form-input" id="tenSach" name="tenSach" type="text"
+            placeholder="Nhập tên sách..." required autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="gia">Giá gốc (VNĐ)</label>
+          <input class="form-input" id="gia" name="gia" type="number"
+            placeholder="VD: 100000" min="0" required autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label class="form-label">&nbsp;</label>
+          <button class="btn-add" type="submit" id="btn-submit">
+            ＋ Thêm sách
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- DANH SÁCH SÁCH -->
+<div class="card">
+  <div class="card-header">
+    <span>📋</span>
+    <span class="card-header-title">Danh sách sách ({{totalBooks}} quyển)</span>
+  </div>
+  <div class="table-wrapper">
+    {{#if books.length}}
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Mã SP</th>
+          <th>Tên sách</th>
+          <th>Giá gốc (VNĐ)</th>
+          <th>VAT</th>
+          <th>Giá sau thuế (VNĐ)</th>
+          <th>Ngày thêm</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each books}}
+        <tr>
+          <td class="text-muted-sm">{{addOne @index}}</td>
+          <td><span class="badge-id">{{maSP}}</span></td>
+          <td>{{tenSach}}</td>
+          <td>{{formatNumber giaGoc}}</td>
+          <td><span class="badge-vat">{{vat}}%</span></td>
+          <td class="price-final">{{formatNumber giaSauThue}}</td>
+          <td class="text-muted-sm">{{formatDate createdAt}}</td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+    {{else}}
+    <div class="empty-state">
+      <div class="empty-icon">📚</div>
+      <p>Chưa có sách nào. Hãy thêm sách đầu tiên!</p>
+    </div>
+    {{/if}}
+  </div>
+</div>
